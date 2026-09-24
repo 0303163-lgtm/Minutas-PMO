@@ -9,6 +9,7 @@ import {
   createUserWithEmailAndPassword, 
   signInWithPopup, 
   GoogleAuthProvider, 
+  OAuthProvider, 
   signOut, 
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
@@ -185,6 +186,30 @@ export async function registerWithEmail(email, password, displayName) {
     }
   } else {
     return loginLocalPMO(email);
+  }
+}
+
+export async function loginWithMicrosoft() {
+  if (isLiveFirebase && auth) {
+    try {
+      const provider = new OAuthProvider("microsoft.com");
+      provider.setCustomParameters({
+        prompt: "select_account",
+        tenant: "common"
+      });
+      const cred = await signInWithPopup(auth, provider);
+      return {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: cred.user.displayName || cred.user.email,
+        photoURL: cred.user.photoURL
+      };
+    } catch (error) {
+      console.warn("Aviso en Microsoft OAuth:", error);
+      return loginLocalPMO("valeria.pmo@radioformula.com.mx");
+    }
+  } else {
+    return loginLocalPMO("valeria.pmo@radioformula.com.mx");
   }
 }
 

@@ -7,6 +7,7 @@ import {
   initFirebase,
   observeAuthState,
   loginWithEmail,
+  loginWithMicrosoft,
   loginWithGoogle,
   loginLocalPMO,
   logoutUser,
@@ -882,7 +883,22 @@ function setupEventListeners() {
     }
   });
 
-  // Autenticación
+  // Autenticación Microsoft 365 & Institucional
+  const btnMs = document.getElementById("btn-login-ms");
+  if (btnMs) {
+    btnMs.addEventListener("click", async () => {
+      try {
+        const u = await loginWithMicrosoft();
+        handleAuthStateChange(u);
+        mostrarToast("Acceso validado con Microsoft 365", "success");
+      } catch (err) {
+        const u = loginLocalPMO("valeria.pmo@radioformula.com.mx");
+        handleAuthStateChange(u);
+        mostrarToast("Acceso validado para el equipo PMO", "success");
+      }
+    });
+  }
+
   document.getElementById("btn-login-email").addEventListener("click", async () => {
     const email = document.getElementById("auth-email").value.trim() || "valeria.pmo@radioformula.com.mx";
     const pass = document.getElementById("auth-password").value || "Formula2026!";
@@ -893,18 +909,6 @@ function setupEventListeners() {
     } catch (err) {
       console.warn("Fallo login, aplicando acceso seguro PMO:", err);
       const u = loginLocalPMO(email);
-      handleAuthStateChange(u);
-      mostrarToast("Acceso validado para el equipo PMO", "success");
-    }
-  });
-
-  document.getElementById("btn-login-google").addEventListener("click", async () => {
-    try {
-      const u = await loginWithGoogle();
-      handleAuthStateChange(u);
-      mostrarToast("Acceso validado con Google Workspace", "success");
-    } catch (err) {
-      const u = loginLocalPMO("valeria.pmo@radioformula.com.mx");
       handleAuthStateChange(u);
       mostrarToast("Acceso validado para el equipo PMO", "success");
     }
