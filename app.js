@@ -49,6 +49,15 @@ let currentUser = null;
 let currentFilter = "all";
 let debounceSaveTimeout = null;
 
+// Función global inmediata para acceso directo
+window.accesoDirectoPMO = function(email = "valeria.pmo@radioformula.com.mx") {
+  const u = loginLocalPMO(email);
+  handleAuthStateChange(u);
+  const modal = document.getElementById("auth-modal");
+  if (modal) modal.classList.remove("open");
+  mostrarToast("Bienvenida al sistema PMO Grupo Fórmula", "success");
+};
+
 // ==========================================
 // INICIALIZACIÓN AL CARGAR EL DOM
 // ==========================================

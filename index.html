@@ -415,7 +415,7 @@
             <i data-lucide="log-in"></i>
             <span>Iniciar Sesión con Contraseña</span>
           </button>
-          <button class="btn btn-secondary" id="btn-login-directo" style="background:#F1F5F9; border-color:#CBD5E1; color:#0D2B52; font-weight:700;">
+          <button type="button" class="btn btn-secondary" id="btn-login-directo" onclick="if(window.accesoDirectoPMO){window.accesoDirectoPMO();}else{document.getElementById('auth-modal').classList.remove('open');}" style="background:#F1F5F9; border-color:#CBD5E1; color:#0D2B52; font-weight:700;">
             <i data-lucide="shield-check" style="color:#1753A2;"></i>
             <span>Acceso Rápido (Equipo PMO)</span>
           </button>
@@ -463,6 +463,6 @@
   <div id="pdf-render-zone" style="display:none;"></div>
 
   <!-- Scripts de la Aplicación -->
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=3.5"></script>
 </body>
 </html>
