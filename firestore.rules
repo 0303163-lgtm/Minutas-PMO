@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas de seguridad para Minutas PMO Grupo Fórmula
+    // Solo usuarios autenticados del equipo pueden leer y escribir minutas
+    match /minutas/{minutaId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Regla global de respaldo
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

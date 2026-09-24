@@ -1,0 +1,21 @@
+{
+  "name": "minutas-pmo-grupo-formula",
+  "version": "1.0.0",
+  "description": "Web App de Minutas Ejecutivas para la PMO de Grupo Fórmula con Cloud Firestore, Firebase Auth y exportación a PDF",
+  "scripts": {
+    "start": "npx --yes serve . -p 5000",
+    "deploy": "npx --yes firebase-tools deploy",
+    "deploy:hosting": "npx --yes firebase-tools deploy --only hosting",
+    "deploy:firestore": "npx --yes firebase-tools deploy --only firestore"
+  },
+  "keywords": [
+    "minutas",
+    "pmo",
+    "grupo-formula",
+    "firebase",
+    "firestore",
+    "pdf"
+  ],
+  "author": "PMO Grupo Fórmula",
+  "license": "Private"
+}

@@ -1,0 +1,15 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "minutas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "actualizadoEl",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

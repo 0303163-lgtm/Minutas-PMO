@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minutas Ejecutivas PMO — Grupo Fórmula</title>
+  <meta name="description" content="Sistema de Minutas Ejecutivas para la Oficina de Gestión de Proyectos (PMO) de Grupo Fórmula. Colaboración en tiempo real con Cloud Firestore y Firebase.">
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome o Lucide Icons vía CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- html2pdf.js para exportación instantánea a PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Estilos Corporativos -->
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" href="logo.png">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       BARRA SUPERIOR (HEADER)
+       ========================================================================== -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-section">
+        <img src="logo.png" alt="Grupo Fórmula" class="brand-logo-img" id="app-logo">
+        <div class="brand-divider"></div>
+        <div class="brand-titles">
+          <span class="brand-pmo-title">Minutas Ejecutivas</span>
+          <span class="brand-pmo-subtitle">PMO Corporativa</span>
+        </div>
+      </div>
+
+      <!-- Acciones de Encabezado -->
+      <div class="header-actions">
+        <!-- Indicador de Sincronización en la Nube -->
+        <div class="sync-indicator" id="sync-status" title="Estado de sincronización en Firestore">
+          <span class="sync-dot" id="sync-dot"></span>
+          <span id="sync-text">Sincronizado</span>
+        </div>
+
+        <!-- Botón Nueva Minuta -->
+        <button class="btn btn-secondary" id="btn-nueva-minuta" title="Crear una nueva minuta y archivar la actual">
+          <i data-lucide="file-plus"></i>
+          <span>Nueva Minuta</span>
+        </button>
+
+        <!-- Botón Historial -->
+        <button class="btn btn-secondary" id="btn-abrir-historial" title="Ver historial de minutas recientes">
+          <i data-lucide="history"></i>
+          <span>Historial</span>
+        </button>
+
+        <!-- Botón Guardar -->
+        <button class="btn btn-primary" id="btn-guardar-minuta" title="Guardar cambios en Cloud Firestore">
+          <i data-lucide="save"></i>
+          <span>Guardar</span>
+        </button>
+
+        <!-- Botón Exportar PDF -->
+        <button class="btn btn-accent" id="btn-exportar-pdf" title="Exportar minuta ejecutiva a PDF formal">
+          <i data-lucide="download"></i>
+          <span>Exportar PDF</span>
+        </button>
+
+        <!-- Configuración Firebase -->
+        <button class="btn btn-secondary btn-icon" id="btn-firebase-cfg" title="Configuración de Firebase">
+          <i data-lucide="flame"></i>
+        </button>
+
+        <!-- Badge de Usuario -->
+        <div class="user-badge" id="user-badge-container">
+          <div class="user-avatar" id="user-avatar-initial">PMO</div>
+          <span id="user-name-display">Equipo PMO</span>
+          <button class="btn btn-icon btn-sm" id="btn-logout" title="Cerrar sesión" style="border:none; background:transparent; color:#64748b; cursor:pointer;">
+            <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       CONTENEDOR PRINCIPAL: HOJA DE MINUTA
+       ========================================================================== -->
+  <main class="main-wrapper">
+    <div class="minute-sheet">
+
+      <!-- BANNER DE LA MINUTA (FOLIO Y TÍTULO) -->
+      <div class="sheet-hero">
+        <div class="hero-meta-row">
+          <div class="hero-tag">
+            <i data-lucide="briefcase" style="width:13px; height:13px;"></i>
+            <span>Oficina de Gestión de Proyectos</span>
+          </div>
+          <div class="hero-folio" id="minuta-folio-display">
+            Folio: <strong id="folio-val">PMO-20260924-01</strong>
+          </div>
+        </div>
+        <input type="text" id="minuta-titulo" class="hero-title-input" placeholder="Título de la Sesión (ej. Comité Semanal de Seguimiento Estratégico)" value="Comité Semanal de Seguimiento de Proyectos PMO">
+      </div>
+
+      <div class="sheet-body">
+
+        <!-- 1. METADATOS DE LA SESIÓN -->
+        <section class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i data-lucide="calendar"></i>
+              <span>Datos de la Sesión</span>
+            </h3>
+            <span class="section-desc">Coordenadas de tiempo y modalidad</span>
+          </div>
+
+          <div class="meta-grid">
+            <div class="form-group">
+              <label class="form-label" for="minuta-fecha">Fecha</label>
+              <input type="date" id="minuta-fecha" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="minuta-hora-inicio">Hora Inicio</label>
+              <input type="time" id="minuta-hora-inicio" class="form-input" value="10:00">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="minuta-hora-fin">Hora Fin</label>
+              <input type="time" id="minuta-hora-fin" class="form-input" value="11:30">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="minuta-lugar">Sede / Modalidad</label>
+              <input type="text" id="minuta-lugar" class="form-input" value="Sala de Consejo / Microsoft Teams" placeholder="Lugar o enlace de reunión">
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label" for="minuta-convocante">Convocante / Facilitador PMO</label>
+              <input type="text" id="minuta-convocante" class="form-input" value="PMO Corporativa Grupo Fórmula" placeholder="Nombre o área convocante">
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. ASISTENTES -->
+        <section class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i data-lucide="users"></i>
+              <span>Asistentes y Participantes</span>
+            </h3>
+            <button class="btn btn-secondary btn-sm" id="btn-add-asistente">
+              <i data-lucide="user-plus"></i>
+              <span>Agregar Asistente</span>
+            </button>
+          </div>
+
+          <div class="items-table-wrapper">
+            <table class="items-table" id="tabla-asistentes">
+              <thead>
+                <tr>
+                  <th style="width: 38%;">Nombre del Asistente</th>
+                  <th style="width: 32%;">Área / Dirección</th>
+                  <th style="width: 22%;">Rol en Sesión</th>
+                  <th style="width: 8%; text-align: center;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="asistentes-tbody">
+                <!-- Filas dinámicas generadas por JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 3. OBJETIVO DE LA SESIÓN -->
+        <section class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i data-lucide="target"></i>
+              <span>Objetivo de la Sesión</span>
+            </h3>
+            <span class="section-desc">Propósito estratégico de la reunión</span>
+          </div>
+          <textarea id="minuta-objetivo" class="form-textarea" rows="2" placeholder="Describe brevemente el objetivo general que se busca alcanzar en esta sesión..."></textarea>
+        </section>
+
+        <!-- 4. RESUMEN EJECUTIVO -->
+        <section class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i data-lucide="file-text"></i>
+              <span>Resumen Ejecutivo</span>
+            </h3>
+            <span class="section-desc">Síntesis de alto nivel para Dirección General</span>
+          </div>
+          <textarea id="minuta-resumen" class="form-textarea" rows="4" placeholder="Escribe el resumen ejecutivo de los puntos tratados, avances globales y contexto relevante de la sesión..."></textarea>
+        </section>
+
+        <!-- 5. ESTATUS POR PROYECTO (SEMÁFORO) -->
+        <section class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i data-lucide="gauge"></i>
+              <span>Estatus por Proyecto (Semáforo de Desempeño)</span>
+            </h3>
+            <button class="btn btn-secondary btn-sm" id="btn-add-proyecto">
+              <i data-lucide="folder-plus"></i>
+              <span>Agregar Proyecto</span>
+            </button>
+          </div>
+
+          <!-- Filtros de Semáforo -->
+          <div class="projects-filter-bar">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Filtrar:</span>
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="verde">🟢 En Tiempo</button>
+            <button class="filter-btn" data-filter="amarillo">🟡 En Riesgo</button>
+            <button class="filter-btn" data-filter="rojo">🔴 Crítico</button>
+          </div>
+
+          <div class="projects-grid" id="proyectos-container">
+            <!-- Tarjetas de proyectos generadas dinámicamente -->
+          </div>
+        </section>
+
+        <!-- 6. DECISIONES TOMADAS -->
+        <section class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i data-lucide="check-circle-2"></i>
+              <span>Decisiones Tomadas</span>
+            </h3>
+            <button class="btn btn-secondary btn-sm" id="btn-add-decision">
+              <i data-lucide="plus"></i>
+              <span>Agregar Decisión</span>
+            </button>
+          </div>
+
+          <div class="decisions-list" id="decisiones-container">
+            <!-- Filas dinámicas -->
+          </div>
+        </section>
+
+        <!-- 7. MATRIZ DE RIESGOS -->
+        <section class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i data-lucide="alert-triangle"></i>
+              <span>Riesgos y Bloqueos Identificados</span>
+            </h3>
+            <button class="btn btn-secondary btn-sm" id="btn-add-riesgo">
+              <i data-lucide="plus"></i>
+              <span>Agregar Riesgo</span>
+            </button>
+          </div>
+
+          <div class="items-table-wrapper">
+            <table class="items-table" id="tabla-riesgos">
+              <thead>
+                <tr>
+                  <th style="width: 40%;">Riesgo / Desvío Detectado</th>
+                  <th style="width: 15%;">Impacto</th>
+                  <th style="width: 37%;">Plan de Mitigación / Acción Inmediata</th>
+                  <th style="width: 8%; text-align: center;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="riesgos-tbody">
+                <!-- Filas dinámicas -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 8. TABLA DE ACCIONES Y COMPROMISOS (QUÉ, QUIÉN, FECHA) -->
+        <section class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i data-lucide="list-checks"></i>
+              <span>Tabla de Acciones y Compromisos</span>
+            </h3>
+            <button class="btn btn-primary btn-sm" id="btn-add-accion">
+              <i data-lucide="plus"></i>
+              <span>Agregar Acción</span>
+            </button>
+          </div>
+
+          <div class="items-table-wrapper">
+            <table class="items-table" id="tabla-acciones">
+              <thead>
+                <tr>
+                  <th style="width: 42%;">Qué (Acuerdo / Entregable Específico)</th>
+                  <th style="width: 25%;">Quién (Responsable Asignado)</th>
+                  <th style="width: 18%;">Fecha Compromiso</th>
+                  <th style="width: 15%;">Estado</th>
+                  <th style="width: 8%; text-align: center;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="acciones-tbody">
+                <!-- Filas dinámicas -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 9. PRÓXIMA SESIÓN -->
+        <section class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i data-lucide="clock"></i>
+              <span>Próxima Sesión</span>
+            </h3>
+            <span class="section-desc">Fecha y hora acordadas para el siguiente comité</span>
+          </div>
+
+          <div style="background: var(--primary-soft); border: 1.5px solid rgba(23, 83, 162, 0.2); border-radius: var(--radius-md); padding: 1.25rem; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1; min-width: 260px;">
+              <label class="form-label" for="minuta-proxima-sesion">Fecha y Hora de la Próxima Reunión</label>
+              <input type="text" id="minuta-proxima-sesion" class="form-input" placeholder="Ej. Jueves 01 de Octubre, 10:00 hrs — Sala de Consejo / Teams">
+            </div>
+            <div class="form-group" style="flex: 1.5; min-width: 260px;">
+              <label class="form-label" for="minuta-temas-pendientes">Temas Prioritarios a Tratar</label>
+              <input type="text" id="minuta-temas-pendientes" class="form-input" placeholder="Ej. Revisión de entregables de cabina y QA móvil">
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       PIE DE PÁGINA (CONFIDENCIAL)
+       ========================================================================== -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <strong>Grupo Fórmula</strong>
+        <span>•</span>
+        <span>Oficina de Gestión de Proyectos (PMO)</span>
+        <span>•</span>
+        <span class="confidential-pill">
+          <i data-lucide="shield-alert" style="width: 12px; height: 12px;"></i>
+          Documento confidencial
+        </span>
+      </div>
+
+      <div class="footer-stats">
+        <span id="stat-proyectos">Proyectos: 0</span>
+        <span>•</span>
+        <span id="stat-acciones">Compromisos: 0</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       DRAWER / PANEL LATERAL: HISTORIAL DE MINUTAS
+       ========================================================================== -->
+  <div class="drawer-backdrop" id="historial-drawer">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <i data-lucide="history" style="color: var(--primary);"></i>
+          <span>Historial de Minutas PMO</span>
+        </div>
+        <button class="btn btn-icon btn-sm" id="btn-cerrar-historial" style="border:none; background:transparent;">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="drawer-search">
+        <input type="text" id="historial-search-input" class="form-input" placeholder="Buscar por título, fecha u objetivo...">
+      </div>
+
+      <div class="drawer-list" id="historial-items-list">
+        <!-- Tarjetas del historial renderizadas con JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE AUTENTICACIÓN / ACCESO EQUIPO PMO
+       ========================================================================== -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <img src="logo.png" alt="Grupo Fórmula">
+        <h3 class="modal-title">Acceso de Seguridad PMO</h3>
+        <p class="modal-subtitle">Sistema de Minutas Ejecutivas Grupo Fórmula</p>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="auth-email">Correo Corporativo</label>
+          <input type="email" id="auth-email" class="form-input" placeholder="ejemplo@radioformula.com.mx" value="valeria.pmo@radioformula.com.mx">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="auth-password">Contraseña</label>
+          <input type="password" id="auth-password" class="form-input" placeholder="••••••••" value="Formula2026!">
+        </div>
+        
+        <div style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.5rem;">
+          <button class="btn btn-primary" id="btn-login-email">
+            <i data-lucide="log-in"></i>
+            <span>Iniciar Sesión</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-login-google">
+            <i data-lucide="mail"></i>
+            <span>Continuar con Google Workspace</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 0.5rem; padding: 0.75rem; background: #F1F5F9; border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+          <i data-lucide="shield-check" style="width:14px; height:14px; display:inline; vertical-align:middle; color:var(--primary);"></i>
+          <span>Solo personal autorizado de la PMO y Dirección General.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE CONFIGURACIÓN FIREBASE
+       ========================================================================== -->
+  <div class="modal-overlay" id="firebase-modal">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Conexión con Cloud Firestore</h3>
+        <p class="modal-subtitle">Configuración del proyecto en Firebase Console (Plan Spark Gratuito)</p>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.8rem; color: var(--text-muted);">
+          Para sincronizar con tu base de datos de <strong>Cloud Firestore</strong> en tiempo real, pega aquí el objeto de configuración proporcionado por la consola de Firebase:
+        </p>
+
+        <textarea id="firebase-config-json" class="form-textarea" rows="7" style="font-family: monospace; font-size: 0.78rem;" placeholder='{\n  "apiKey": "AIzaSy...",\n  "authDomain": "tu-proyecto.firebaseapp.com",\n  "projectId": "tu-proyecto",\n  "storageBucket": "tu-proyecto.appspot.com",\n  "messagingSenderId": "...",\n  "appId": "..."\n}'></textarea>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
+          <button class="btn btn-secondary btn-sm" id="btn-reset-firebase">Restablecer / Modo Local</button>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-secondary btn-sm" id="btn-cerrar-firebase-modal">Cancelar</button>
+            <button class="btn btn-primary btn-sm" id="btn-guardar-firebase-config">Guardar y Conectar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor para Notificaciones Toast -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Zona oculta de renderizado PDF -->
+  <div id="pdf-render-zone" style="display:none;"></div>
+
+  <!-- Scripts de la Aplicación -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
