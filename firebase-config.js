@@ -26,14 +26,15 @@ import {
   onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// Configuración por defecto de Firebase (Reemplazar con tus credenciales de Firebase Console)
+// Configuración real del proyecto Firebase minutas-pmo
 export const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSy_CONFIGURA_TU_API_KEY",
-  authDomain: "minutas-pmo-formula.firebaseapp.com",
-  projectId: "minutas-pmo-formula",
-  storageBucket: "minutas-pmo-formula.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef123456"
+  apiKey: "AIzaSyA_hm-eTI1zfE5EWRtswkrsWjlC7Gveqsw",
+  authDomain: "minutas-pmo.firebaseapp.com",
+  projectId: "minutas-pmo",
+  storageBucket: "minutas-pmo.firebasestorage.app",
+  messagingSenderId: "858253362534",
+  appId: "1:858253362534:web:21815852b35d3aff4274a7",
+  measurementId: "G-9FXLTT6XTY"
 };
 
 // Carga la configuración guardada por el usuario en localStorage o usa la predeterminada
