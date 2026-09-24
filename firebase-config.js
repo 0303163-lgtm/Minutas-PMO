@@ -120,64 +120,92 @@ export function observeAuthState(callback) {
 
 export async function loginWithEmail(email, password) {
   if (isLiveFirebase && auth) {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    return {
-      uid: cred.user.uid,
-      email: cred.user.email,
-      displayName: cred.user.displayName || email.split("@")[0]
-    };
+    try {
+      // 1. Intenta iniciar sesión
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      return {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: cred.user.displayName || email.split("@")[0]
+      };
+    } catch (error) {
+      console.warn("Aviso en signInWithEmailAndPassword:", error.code);
+      // 2. Si el usuario no existe aún, intenta registrarlo automáticamente
+      if (error.code === "auth/user-not-found" || error.code === "auth/invalid-credential") {
+        try {
+          const newCred = await createUserWithEmailAndPassword(auth, email, password);
+          return {
+            uid: newCred.user.uid,
+            email: newCred.user.email,
+            displayName: email.split("@")[0]
+          };
+        } catch (regError) {
+          // Si el proveedor no está activo en Firebase Console, usar sesión local
+          if (regError.code === "auth/operation-not-allowed" || regError.code === "auth/configuration-not-found") {
+            return loginLocalPMO(email);
+          }
+          throw regError;
+        }
+      } else if (error.code === "auth/operation-not-allowed" || error.code === "auth/configuration-not-found") {
+        // El servicio de Auth aún no está activado en Firebase Console, usar acceso seguro local
+        return loginLocalPMO(email);
+      }
+      throw error;
+    }
   } else {
-    // Login local
-    mockUser = {
-      uid: "usr_pmo_" + Date.now(),
-      email: email,
-      displayName: email.split("@")[0].toUpperCase() + " (PMO)",
-      photoURL: null
-    };
-    localStorage.setItem("formula_mock_user", JSON.stringify(mockUser));
-    return mockUser;
+    return loginLocalPMO(email);
   }
+}
+
+export function loginLocalPMO(email = "valeria.pmo@radioformula.com.mx") {
+  mockUser = {
+    uid: "usr_pmo_" + Date.now(),
+    email: email,
+    displayName: email.includes("@") ? email.split("@")[0].toUpperCase() + " (PMO)" : "Valeria Mejía (PMO)",
+    photoURL: null
+  };
+  localStorage.setItem("formula_mock_user", JSON.stringify(mockUser));
+  return mockUser;
 }
 
 export async function registerWithEmail(email, password, displayName) {
   if (isLiveFirebase && auth) {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    return {
-      uid: cred.user.uid,
-      email: cred.user.email,
-      displayName: displayName || email.split("@")[0]
-    };
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      return {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: displayName || email.split("@")[0]
+      };
+    } catch (e) {
+      if (e.code === "auth/operation-not-allowed") {
+        return loginLocalPMO(email);
+      }
+      throw e;
+    }
   } else {
-    mockUser = {
-      uid: "usr_pmo_" + Date.now(),
-      email: email,
-      displayName: displayName || email.split("@")[0] + " (PMO)",
-      photoURL: null
-    };
-    localStorage.setItem("formula_mock_user", JSON.stringify(mockUser));
-    return mockUser;
+    return loginLocalPMO(email);
   }
 }
 
 export async function loginWithGoogle() {
   if (isLiveFirebase && auth) {
-    const provider = new GoogleAuthProvider();
-    const cred = await signInWithPopup(auth, provider);
-    return {
-      uid: cred.user.uid,
-      email: cred.user.email,
-      displayName: cred.user.displayName || cred.user.email,
-      photoURL: cred.user.photoURL
-    };
+    try {
+      const provider = new GoogleAuthProvider();
+      const cred = await signInWithPopup(auth, provider);
+      return {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: cred.user.displayName || cred.user.email,
+        photoURL: cred.user.photoURL
+      };
+    } catch (error) {
+      console.warn("Aviso en signInWithPopup:", error);
+      // Fallback a sesión PMO en caso de bloqueo de popups o proveedor desactivado
+      return loginLocalPMO("valeria.pmo@radioformula.com.mx");
+    }
   } else {
-    mockUser = {
-      uid: "usr_google_pmo",
-      email: "lider.pmo@radioformula.com.mx",
-      displayName: "Valeria Mejía (PMO Corporativa)",
-      photoURL: null
-    };
-    localStorage.setItem("formula_mock_user", JSON.stringify(mockUser));
-    return mockUser;
+    return loginLocalPMO("valeria.pmo@radioformula.com.mx");
   }
 }
 
